@@ -2,152 +2,118 @@ import java.io.BufferedWriter;
 import java.io.File;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
 public class WindowsAutostart {
+    // Название приложения для записи в реестр
     private static final String APP_NAME = "MyJavaAutostartApp";
 
     public static void main(String[] args) {
-        // Check if this is the first run or started from autostart
+        // Проверяем, является ли это первым запуском
         boolean isFirstRun = args.length == 0;
 
         if (isFirstRun) {
-            System.out.println("First run detected. Adding to startup...");
-            // Add to startup
+            System.out.println("Первый запуск. Добавление в автозапуск...");
+            // Добавляем программу в автозапуск
             if (addToStartup()) {
-                // Restart computer
+                // Перезагружаем компьютер после успешного добавления
                 restartComputer();
             }
         } else {
-            // This is a run from startup, create log file
+            // Если программа запущена из автозапуска, создаем лог-файл
             createLogFile();
-
-            // Here you can add your main application code
-            System.out.println("Application running from startup...");
+            System.out.println("Приложение запущено из автозапуска...");
         }
     }
 
     /**
-     * Add the current application to Windows startup via registry
+     * Добавляет текущую программу в автозапуск Windows через реестр
      */
     private static boolean addToStartup() {
         try {
-            // Get the path to the current JAR file
+            // Получаем путь к JAR-файлу текущей программы
             String jarPath = new File(WindowsAutostart.class.getProtectionDomain()
                     .getCodeSource().getLocation().toURI()).getAbsolutePath();
 
-            // Fix any path issues
+            // Исправляем возможные ошибки с разделителями в пути
             jarPath = jarPath.replace("/", "\\");
 
-            // Create registry command with startup argument for detection
+            // Формируем команду для добавления записи в реестр
             String command = String.format(
-                    "reg add HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run /v %s /t REG_SZ /d \"javaw -jar \\\"%s\\\" autostart\" /f",
+                    "reg add HKCU\\SOFTWARE\\Microsoft\\Windпше ows\\CurrentVersion\\Run /v %s /t REG_SZ /d \"javaw -jar \\\"%s\\\" autostart\" /f",
                     APP_NAME, jarPath);
 
-            // Execute command
+            // Выполняем команду через процесс
             Process process = Runtime.getRuntime().exec(command);
             int exitCode = process.waitFor();
 
             if (exitCode == 0) {
-                System.out.println("Successfully added to startup: " + jarPath);
+                System.out.println("Успешно добавлено в автозапуск: " + jarPath);
 
-                // Also create a test file to confirm the program ran
+                // Создаём тестовый файл для подтверждения установки
                 try {
-                    File testFile = new File("C:\\autostart_setup_successful.txt");
+                    File testFile = new File("D:\\autostart_setup_successful.txt");
                     try (BufferedWriter writer = new BufferedWriter(new FileWriter(testFile))) {
-                        writer.write("Setup completed at: " + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
+                        writer.write("Установка завершена: " + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
                         writer.newLine();
-                        writer.write("JAR path: " + jarPath);
+                        writer.write("Путь к JAR: " + jarPath);
                     }
                 } catch (IOException e) {
-                    System.err.println("Error creating test file: " + e.getMessage());
+                    System.err.println("Ошибка при создании тестового файла: " + e.getMessage());
                 }
-
                 return true;
             } else {
-                System.err.println("Failed to add to startup. Exit code: " + exitCode);
+                System.err.println("Не удалось добавить в автозапуск. Код выхода: " + exitCode);
                 return false;
             }
         } catch (Exception e) {
-            System.err.println("Error adding to startup: " + e.getMessage());
+            System.err.println("Ошибка при добавлении в автозапуск: " + e.getMessage());
             e.printStackTrace();
             return false;
         }
     }
 
     /**
-     * Create a log file with timestamp of execution directly on C: drive
+     * Создает лог-файл с отметкой времени о запуске программы
      */
     private static void createLogFile() {
         try {
-            // Create log directory on C: drive
-            Path logDir = Paths.get("C:\\AutostartLogs");
-            if (!Files.exists(logDir)) {
-                Files.createDirectories(logDir);
-            }
-
-            // Create log file with current timestamp
+            // Формируем текущую дату и время
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             String timestamp = dateFormat.format(new Date());
-            File logFile = new File(logDir.toFile(), "autostart_log.txt");
 
-            // Also create a file directly at C: root for testing
-            File rootLogFile = new File("C:\\autostart_log.txt");
-
-            // Append to log files
+            // Создаём лог-файл на диске D:
+            File logFile = new File("D:\\autostart_log.txt");
             try (BufferedWriter writer = new BufferedWriter(new FileWriter(logFile, true))) {
-                writer.write("Application executed at: " + timestamp);
+                writer.write("Программа запущена: " + timestamp);
                 writer.newLine();
             }
-
-            try (BufferedWriter writer = new BufferedWriter(new FileWriter(rootLogFile, true))) {
-                writer.write("Application executed at: " + timestamp);
-                writer.newLine();
-            }
-
-            System.out.println("Log files created/updated at: " + logFile.getAbsolutePath() + " and " + rootLogFile.getAbsolutePath());
+            System.out.println("Лог-файл создан/обновлен: " + logFile.getAbsolutePath());
         } catch (IOException e) {
-            System.err.println("Error creating log file: " + e.getMessage());
-            e.printStackTrace();
-
-            // Try creating file with lower permissions requirement
-            try {
-                File fallbackFile = new File(System.getProperty("java.io.tmpdir"), "autostart_fallback_log.txt");
-                try (BufferedWriter writer = new BufferedWriter(new FileWriter(fallbackFile, true))) {
-                    writer.write("Application executed at: " + new SimpleDateFormat("yyyy-MM-dd HH:mm:ss").format(new Date()));
-                    writer.newLine();
-                    writer.write("Error writing to C: drive: " + e.getMessage());
-                }
-                System.out.println("Fallback log file created at: " + fallbackFile.getAbsolutePath());
-            } catch (IOException fallbackError) {
-                System.err.println("Error creating fallback log file: " + fallbackError.getMessage());
-            }
+            System.err.println("Ошибка при создании лог-файла: " + e.getMessage());
         }
     }
 
     /**
-     * Restart the computer
+     * Перезагружает компьютер
      */
     private static boolean restartComputer() {
         try {
-            System.out.println("Restarting computer in 10 seconds...");
-            // Use shutdown command with restart flag and 10 second delay
-            Process process = Runtime.getRuntime().exec("shutdown /r /t 10 /c \"Restarting computer after adding application to startup\"");
+            System.out.println("Перезагрузка компьютера через 10 секунд...");
+            // Запускаем команду для перезагрузки через 10 секунд
+            Process process = Runtime.getRuntime().exec("shutdown /r /t 10 /c \"Перезагрузка после добавления в автозапуск\"");
             int exitCode = process.waitFor();
 
             if (exitCode == 0) {
-                System.out.println("Restart command executed successfully");
+                System.out.println("Команда на перезагрузку успешно выполнена");
                 return true;
             } else {
-                System.err.println("Failed to restart computer. Exit code: " + exitCode);
+                System.err.println("Ошибка при выполнении команды перезагрузки. Код выхода: " + exitCode);
                 return false;
             }
         } catch (Exception e) {
-            System.err.println("Error restarting computer: " + e.getMessage());
+            System.err.println("Ошибка при перезагрузке: " + e.getMessage());
             e.printStackTrace();
             return false;
         }
