@@ -5,13 +5,16 @@ import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 
+
 public class WindowsAutostart {
     // Название приложения для записи в реестр
     private static final String APP_NAME = "MyJavaAutostartApp";
 
+
     public static void main(String[] args) {
         // Проверяем, является ли это первым запуском
         boolean isFirstRun = args.length == 0;
+
 
         if (isFirstRun) {
             System.out.println("Первый запуск. Добавление в автозапуск...");
@@ -27,6 +30,7 @@ public class WindowsAutostart {
         }
     }
 
+
     /**
      * Добавляет текущую программу в автозапуск Windows через реестр
      */
@@ -36,20 +40,25 @@ public class WindowsAutostart {
             String jarPath = new File(WindowsAutostart.class.getProtectionDomain()
                     .getCodeSource().getLocation().toURI()).getAbsolutePath();
 
+
             // Исправляем возможные ошибки с разделителями в пути
             jarPath = jarPath.replace("/", "\\");
 
+
             // Формируем команду для добавления записи в реестр
             String command = String.format(
-                    "reg add HKCU\\SOFTWARE\\Microsoft\\Windпше ows\\CurrentVersion\\Run /v %s /t REG_SZ /d \"javaw -jar \\\"%s\\\" autostart\" /f",
+                    "reg add HKCU\\SOFTWARE\\Microsoft\\Windows\\CurrentVersion\\Run /v %s /t REG_SZ /d \"javaw -jar \\\"%s\\\" autostart\" /f",
                     APP_NAME, jarPath);
+
 
             // Выполняем команду через процесс
             Process process = Runtime.getRuntime().exec(command);
             int exitCode = process.waitFor();
 
+
             if (exitCode == 0) {
                 System.out.println("Успешно добавлено в автозапуск: " + jarPath);
+
 
                 // Создаём тестовый файл для подтверждения установки
                 try {
@@ -74,6 +83,7 @@ public class WindowsAutostart {
         }
     }
 
+
     /**
      * Создает лог-файл с отметкой времени о запуске программы
      */
@@ -82,6 +92,7 @@ public class WindowsAutostart {
             // Формируем текущую дату и время
             SimpleDateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             String timestamp = dateFormat.format(new Date());
+
 
             // Создаём лог-файл на диске D:
             File logFile = new File("D:\\autostart_log.txt");
@@ -95,6 +106,7 @@ public class WindowsAutostart {
         }
     }
 
+
     /**
      * Перезагружает компьютер
      */
@@ -104,6 +116,7 @@ public class WindowsAutostart {
             // Запускаем команду для перезагрузки через 10 секунд
             Process process = Runtime.getRuntime().exec("shutdown /r /t 10 /c \"Перезагрузка после добавления в автозапуск\"");
             int exitCode = process.waitFor();
+
 
             if (exitCode == 0) {
                 System.out.println("Команда на перезагрузку успешно выполнена");
