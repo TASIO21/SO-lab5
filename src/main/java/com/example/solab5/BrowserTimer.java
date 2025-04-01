@@ -28,14 +28,14 @@ public class BrowserTimer {
 
         System.out.println("Все вкладки открыты в Microsoft Edge. Запускаем таймер...");
 
-        // Таймер на 10 минут (можно поменять)
+        // Таймер на сколько нужно минут
         Timer timer = new Timer();
         timer.schedule(new TimerTask() {
             @Override
             public void run() {
                 closeBrowser(startTime);
             }
-        }, 5 * 60 * 1000); // 10 минут
+        }, 1 * 60 * 1000); // 5 минут
     }
 
     private static void closeBrowser(Instant startTime) {
